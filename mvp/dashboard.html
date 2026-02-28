@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIP-X — Accountable Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c10;
+    --surface: #0d1117;
+    --border: #1a2332;
+    --accent: #00ff88;
+    --accent2: #0088ff;
+    --danger: #ff3355;
+    --warn: #ffaa00;
+    --text: #c9d1d9;
+    --text-dim: #4a5568;
+    --font-mono: 'Space Mono', monospace;
+    --font-display: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 0;
+    position: sticky;
+    top: 0;
+    background: rgba(8,12,16,0.95);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-badge {
+    background: var(--accent);
+    color: #000;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--accent);
+    border: 1px solid rgba(0,255,136,0.2);
+    padding: 6px 12px;
+    border-radius: 20px;
+  }
+
+  .pulse {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* API URL config */
+  .api-config {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    padding: 16px 20px;
+    margin: 24px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 4px;
+  }
+
+  .api-config label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .api-config input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--accent2);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    padding: 8px 12px;
+    border-radius: 3px;
+    outline: none;
+  }
+
+  .api-config input:focus { border-color: var(--accent2); }
+
+  .btn {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+  }
+
+  .btn-primary:hover { background: #00cc6a; transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+  }
+
+  .btn-secondary:hover { background: rgba(0,136,255,0.1); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin: 24px 0;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .stat-card.green::before { background: var(--accent); }
+  .stat-card.blue::before { background: var(--accent2); }
+  .stat-card.yellow::before { background: var(--warn); }
+  .stat-card.red::before { background: var(--danger); }
+
+  .stat-label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  .stat-value.green { color: var(--accent); }
+  .stat-value.blue { color: var(--accent2); }
+  .stat-value.yellow { color: var(--warn); }
+
+  /* Main grid */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+
+  .card-body { padding: 20px; }
+
+  /* Form */
+  .form-group { margin-bottom: 14px; }
+
+  .form-label {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .form-input, .form-select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    padding: 10px 12px;
+    border-radius: 3px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus, .form-select:focus { border-color: var(--accent); }
+  .form-select option { background: var(--surface); }
+
+  /* Ledger entries */
+  .ledger-entry {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 12px;
+    margin-bottom: 8px;
+    font-size: 0.72rem;
+    transition: border-color 0.2s;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .ledger-entry:hover { border-color: var(--accent); }
+
+  .ledger-entry-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .event-badge {
+    font-size: 0.6rem;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .event-submitted { background: rgba(0,136,255,0.15); color: var(--accent2); border: 1px solid rgba(0,136,255,0.3); }
+  .event-approved { background: rgba(0,255,136,0.15); color: var(--accent); border: 1px solid rgba(0,255,136,0.3); }
+  .event-rejected { background: rgba(255,51,85,0.15); color: var(--danger); border: 1px solid rgba(255,51,85,0.3); }
+  .event-executed { background: rgba(255,170,0,0.15); color: var(--warn); border: 1px solid rgba(255,170,0,0.3); }
+
+  .hash-display {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    word-break: break-all;
+    background: var(--bg);
+    padding: 4px 8px;
+    border-radius: 2px;
+    margin-top: 6px;
+  }
+
+  .hash-display span { color: var(--accent); }
+
+  /* Verify banner */
+  .verify-banner {
+    padding: 12px 20px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: center;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .verify-ok { background: rgba(0,255,136,0.1); color: var(--accent); border: 1px solid rgba(0,255,136,0.3); }
+  .verify-fail { background: rgba(255,51,85,0.1); color: var(--danger); border: 1px solid rgba(255,51,85,0.3); }
+  .verify-empty { background: rgba(74,85,104,0.2); color: var(--text-dim); border: 1px solid var(--border); }
+
+  /* Query list */
+  .query-item {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+    font-size: 0.72rem;
+  }
+
+  .query-item:last-child { border-bottom: none; }
+
+  .query-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .status-badge {
+    font-size: 0.6rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .status-pending { background: rgba(255,170,0,0.15); color: var(--warn); }
+  .status-approved { background: rgba(0,255,136,0.15); color: var(--accent); }
+  .status-rejected { background: rgba(255,51,85,0.15); color: var(--danger); }
+
+  .query-text { color: var(--text-dim); margin-top: 4px; font-size: 0.68rem; }
+  .query-reason { color: var(--accent2); font-size: 0.65rem; margin-top: 2px; }
+
+  /* Response box */
+  .response-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 12px;
+    font-size: 0.7rem;
+    color: var(--accent);
+    min-height: 60px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .response-box.visible { display: block; }
+  .response-box.error { color: var(--danger); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+  }
+
+  .empty-state .icon { font-size: 2rem; margin-bottom: 8px; opacity: 0.3; }
+
+  /* Full width card */
+  .card-full { margin-bottom: 16px; }
+
+  /* Scrollable */
+  .scrollable { max-height: 350px; overflow-y: auto; padding-right: 4px; }
+  .scrollable::-webkit-scrollbar { width: 4px; }
+  .scrollable::-webkit-scrollbar-track { background: var(--bg); }
+  .scrollable::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 0;
+    margin-top: 40px;
+    text-align: center;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  footer span { color: var(--accent); }
+
+  @media (max-width: 768px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .main-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo">
+        AIP-X
+        <span class="logo-badge">MVP</span>
+      </div>
+      <div class="status-pill">
+        <div class="pulse"></div>
+        SYSTEM ONLINE
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container" style="padding-top: 24px; padding-bottom: 40px;">
+
+  <!-- API Config -->
+  <div class="api-config">
+    <label>API URL</label>
+    <input type="text" id="apiUrl" placeholder="https://your-codespace-8000.app.github.dev" />
+    <button class="btn btn-primary" onclick="loadAll()">CONNECT</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card green">
+      <div class="stat-label">Total Queries</div>
+      <div class="stat-value green" id="statQueries">—</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">Ledger Entries</div>
+      <div class="stat-value blue" id="statLedger">—</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-label">Pending</div>
+      <div class="stat-value yellow" id="statPending">—</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Chain Status</div>
+      <div class="stat-value" id="statChain" style="font-size:1rem; padding-top:8px;">—</div>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="main-grid">
+
+    <!-- Submit Query -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="dot" style="background: var(--accent2)"></div>
+          Submit Query
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Operator Username</label>
+          <input type="text" class="form-input" id="submitOperator" placeholder="alice" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Query</label>
+          <input type="text" class="form-input" id="submitQuery" placeholder="SELECT * FROM persons WHERE..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason / Justification</label>
+          <input type="text" class="form-input" id="submitReason" placeholder="Counter-terrorism investigation #42" />
+        </div>
+        <button class="btn btn-primary" onclick="submitQuery()" style="width:100%">SUBMIT QUERY →</button>
+        <div class="response-box" id="submitResponse"></div>
+      </div>
+    </div>
+
+    <!-- Approve Query -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="dot" style="background: var(--accent)"></div>
+          Approve / Reject
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Query ID</label>
+          <input type="number" class="form-input" id="approveQueryId" placeholder="1" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Approver Username</label>
+          <input type="text" class="form-input" id="approveUsername" placeholder="bob (supervisor) or carol (judge)" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Decision</label>
+          <select class="form-select" id="approveDecision">
+            <option value="approved">✅ Approved</option>
+            <option value="rejected">❌ Rejected</option>
+          </select>
+        </div>
+        <button class="btn btn-secondary" onclick="approveQuery()" style="width:100%">SIGN APPROVAL →</button>
+        <div class="response-box" id="approveResponse"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Ledger -->
+  <div class="card card-full">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="dot" style="background: var(--accent)"></div>
+        Immutable Audit Ledger
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-secondary" onclick="verifyLedger()">VERIFY CHAIN</button>
+        <button class="btn btn-primary" onclick="loadLedger()">REFRESH</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div id="verifyBanner"></div>
+      <div class="scrollable" id="ledgerEntries">
+        <div class="empty-state">
+          <div class="icon">🔗</div>
+          Connect to API to load ledger
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Queries -->
+  <div class="card card-full">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="dot" style="background: var(--accent2)"></div>
+        Query Registry
+      </div>
+      <button class="btn btn-primary" onclick="loadQueries()">REFRESH</button>
+    </div>
+    <div class="card-body">
+      <div class="scrollable" id="queryList">
+        <div class="empty-state">
+          <div class="icon">📋</div>
+          Connect to API to load queries
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="container">
+    <span>AIP-X</span> — Accountable Intelligence Platform — Open Source MVP v0.1.0
+  </div>
+</footer>
+
+<script>
+  function getApi() {
+    return document.getElementById('apiUrl').value.replace(/\/$/, '');
+  }
+
+  function showResponse(id, data, isError) {
+    const el = document.getElementById(id);
+    el.textContent = JSON.stringify(data, null, 2);
+    el.className = 'response-box visible' + (isError ? ' error' : '');
+  }
+
+  async function apiCall(path, method = 'GET', body = null) {
+    const url = getApi() + path;
+    const opts = {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(url, opts);
+    return res.json();
+  }
+
+  async function submitQuery() {
+    const operator = document.getElementById('submitOperator').value;
+    const query = document.getElementById('submitQuery').value;
+    const reason = document.getElementById('submitReason').value;
+    if (!operator || !query || !reason) {
+      showResponse('submitResponse', { error: 'Fill all fields' }, true);
+      return;
+    }
+    try {
+      const data = await apiCall('/query/submit', 'POST', {
+        operator_username: operator,
+        query_text: query,
+        reason: reason
+      });
+      showResponse('submitResponse', data, data.detail);
+      loadAll();
+    } catch (e) {
+      showResponse('submitResponse', { error: e.message }, true);
+    }
+  }
+
+  async function approveQuery() {
+    const queryId = parseInt(document.getElementById('approveQueryId').value);
+    const approver = document.getElementById('approveUsername').value;
+    const decision = document.getElementById('approveDecision').value;
+    if (!queryId || !approver) {
+      showResponse('approveResponse', { error: 'Fill all fields' }, true);
+      return;
+    }
+    try {
+      const data = await apiCall('/query/approve', 'POST', {
+        query_id: queryId,
+        approver_username: approver,
+        decision: decision
+      });
+      showResponse('approveResponse', data, data.detail);
+      loadAll();
+    } catch (e) {
+      showResponse('approveResponse', { error: e.message }, true);
+    }
+  }
+
+  async function loadLedger() {
+    try {
+      const data = await apiCall('/ledger');
+      const container = document.getElementById('ledgerEntries');
+      document.getElementById('statLedger').textContent = data.total_entries;
+
+      if (!data.ledger || data.ledger.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">🔗</div>No entries yet. Submit a query to start.</div>';
+        return;
+      }
+
+      container.innerHTML = [...data.ledger].reverse().map(entry => `
+        <div class="ledger-entry">
+          <div class="ledger-entry-header">
+            <span class="event-badge event-${entry.event_type}">${entry.event_type}</span>
+            <span style="color: var(--text-dim); font-size: 0.65rem;">#${entry.id} · ${new Date(entry.timestamp).toLocaleTimeString()}</span>
+          </div>
+          <div style="color: var(--text); margin-bottom: 4px;">Actor: <strong style="color:#fff">${entry.actor}</strong> · Query ID: <strong style="color: var(--accent2)">${entry.query_id}</strong></div>
+          <div class="hash-display">HASH: <span>${entry.entry_hash}</span></div>
+          ${entry.previous_hash ? `<div class="hash-display">PREV: <span style="color: var(--text-dim)">${entry.previous_hash}</span></div>` : ''}
+        </div>
+      `).join('');
+    } catch(e) {
+      document.getElementById('ledgerEntries').innerHTML = `<div class="empty-state" style="color:var(--danger)">Error: ${e.message}</div>`;
+    }
+  }
+
+  async function verifyLedger() {
+    try {
+      const data = await apiCall('/ledger/verify');
+      const banner = document.getElementById('verifyBanner');
+      const chainEl = document.getElementById('statChain');
+
+      if (data.status === 'VERIFIED') {
+        banner.innerHTML = `<div class="verify-banner verify-ok">✅ CHAIN VERIFIED — ${data.message}</div>`;
+        chainEl.textContent = '✅ OK';
+        chainEl.style.color = 'var(--accent)';
+      } else if (data.status === 'TAMPERED') {
+        banner.innerHTML = `<div class="verify-banner verify-fail">⚠️ CHAIN TAMPERED — ${data.issues.join(', ')}</div>`;
+        chainEl.textContent = '⚠️ ERR';
+        chainEl.style.color = 'var(--danger)';
+      } else {
+        banner.innerHTML = `<div class="verify-banner verify-empty">— LEDGER EMPTY</div>`;
+        chainEl.textContent = '—';
+      }
+    } catch(e) {}
+  }
+
+  async function loadQueries() {
+    try {
+      const data = await apiCall('/queries');
+      const container = document.getElementById('queryList');
+      const queries = data.queries || [];
+
+      document.getElementById('statQueries').textContent = queries.length;
+      document.getElementById('statPending').textContent = queries.filter(q => q.status === 'pending').length;
+
+      if (queries.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📋</div>No queries yet.</div>';
+        return;
+      }
+
+      container.innerHTML = queries.map(q => `
+        <div class="query-item">
+          <div class="query-header">
+            <span style="color:#fff; font-weight:700">#${q.id} — ${q.operator}</span>
+            <span class="status-badge status-${q.status}">${q.status}</span>
+          </div>
+          <div class="query-text">${q.query_text}</div>
+          <div class="query-reason">↳ ${q.reason}</div>
+        </div>
+      `).join('');
+    } catch(e) {}
+  }
+
+  async function loadAll() {
+    await Promise.all([loadLedger(), loadQueries(), verifyLedger()]);
+  }
+
+  // Auto-detect API URL from current page
+  window.addEventListener('load', () => {
+    const url = window.location.href;
+    if (url.includes('github.dev')) {
+      const base = url.replace(/-\d+\.app\.github\.dev.*/, '-8000.app.github.dev');
+      document.getElementById('apiUrl').value = base;
+      loadAll();
+    }
+  });
+</script>
+</body>
+</html>
