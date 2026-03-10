@@ -14,6 +14,7 @@
     --accent2: #0088ff;
     --danger: #ff3355;
     --warn: #ffaa00;
+    --purple: #aa66ff;
     --text: #c9d1d9;
     --text-dim: #4a5568;
     --font-mono: 'Space Mono', monospace;
@@ -30,12 +31,11 @@
     overflow-x: hidden;
   }
 
-  /* Grid background */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background-image: 
+    background-image:
       linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
       linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
     background-size: 40px 40px;
@@ -51,7 +51,6 @@
     z-index: 1;
   }
 
-  /* Header */
   header {
     border-bottom: 1px solid var(--border);
     padding: 20px 0;
@@ -88,6 +87,13 @@
     letter-spacing: 1px;
   }
 
+  .logo-version {
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-weight: 400;
+  }
+
   .status-pill {
     display: flex;
     align-items: center;
@@ -111,7 +117,6 @@
     50% { opacity: 0.4; transform: scale(0.8); }
   }
 
-  /* API URL config */
   .api-config {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -158,32 +163,20 @@
     text-transform: uppercase;
   }
 
-  .btn-primary {
-    background: var(--accent);
-    color: #000;
-    font-weight: 700;
-  }
-
+  .btn-primary { background: var(--accent); color: #000; font-weight: 700; }
   .btn-primary:hover { background: #00cc6a; transform: translateY(-1px); }
-
-  .btn-secondary {
-    background: transparent;
-    color: var(--accent2);
-    border: 1px solid var(--accent2);
-  }
-
+  .btn-secondary { background: transparent; color: var(--accent2); border: 1px solid var(--accent2); }
   .btn-secondary:hover { background: rgba(0,136,255,0.1); }
-
-  .btn-danger {
-    background: transparent;
-    color: var(--danger);
-    border: 1px solid var(--danger);
-  }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+  .btn-purple { background: transparent; color: var(--purple); border: 1px solid var(--purple); }
+  .btn-purple:hover { background: rgba(170,102,255,0.1); }
+  .btn-warn { background: transparent; color: var(--warn); border: 1px solid var(--warn); }
+  .btn-warn:hover { background: rgba(255,170,0,0.1); }
 
   /* Stats row */
   .stats-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 16px;
     margin: 24px 0;
   }
@@ -208,9 +201,10 @@
   .stat-card.blue::before { background: var(--accent2); }
   .stat-card.yellow::before { background: var(--warn); }
   .stat-card.red::before { background: var(--danger); }
+  .stat-card.purple::before { background: var(--purple); }
 
   .stat-label {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     color: var(--text-dim);
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -219,7 +213,7 @@
 
   .stat-value {
     font-family: var(--font-display);
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: 800;
     color: #fff;
   }
@@ -227,6 +221,37 @@
   .stat-value.green { color: var(--accent); }
   .stat-value.blue { color: var(--accent2); }
   .stat-value.yellow { color: var(--warn); }
+  .stat-value.purple { color: var(--purple); }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+  }
+
+  .tab {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding: 10px 20px;
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .tab:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+  .tab.active { color: var(--accent); background: var(--surface); border-color: var(--border); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
 
   /* Main grid */
   .main-grid {
@@ -263,14 +288,9 @@
     gap: 8px;
   }
 
-  .card-title .dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-  }
-
+  .card-title .dot { width: 6px; height: 6px; border-radius: 50%; }
   .card-body { padding: 20px; }
 
-  /* Form */
   .form-group { margin-bottom: 14px; }
 
   .form-label {
@@ -349,6 +369,55 @@
 
   .hash-display span { color: var(--accent); }
 
+  /* Block card */
+  .block-card {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 14px;
+    margin-bottom: 10px;
+    background: var(--surface);
+    transition: border-color 0.2s;
+    animation: slideIn 0.3s ease;
+  }
+
+  .block-card:hover { border-color: var(--purple); }
+
+  .block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .block-index {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--purple);
+  }
+
+  .block-meta {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+  }
+
+  .block-txs {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .block-tx {
+    font-size: 0.65rem;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    background: var(--bg);
+    border-radius: 2px;
+    border-left: 2px solid var(--accent2);
+  }
+
+  .block-tx .tx-type { color: var(--warn); font-weight: 700; }
+
   /* Verify banner */
   .verify-banner {
     padding: 12px 20px;
@@ -392,9 +461,21 @@
   .status-pending { background: rgba(255,170,0,0.15); color: var(--warn); }
   .status-approved { background: rgba(0,255,136,0.15); color: var(--accent); }
   .status-rejected { background: rgba(255,51,85,0.15); color: var(--danger); }
+  .status-executed { background: rgba(170,102,255,0.15); color: var(--purple); }
 
   .query-text { color: var(--text-dim); margin-top: 4px; font-size: 0.68rem; }
   .query-reason { color: var(--accent2); font-size: 0.65rem; margin-top: 2px; }
+
+  .query-actions {
+    margin-top: 6px;
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-xs {
+    font-size: 0.6rem;
+    padding: 4px 10px;
+  }
 
   /* Response box */
   .response-box {
@@ -414,7 +495,6 @@
   .response-box.visible { display: block; }
   .response-box.error { color: var(--danger); }
 
-  /* Empty state */
   .empty-state {
     text-align: center;
     padding: 40px 20px;
@@ -424,16 +504,13 @@
 
   .empty-state .icon { font-size: 2rem; margin-bottom: 8px; opacity: 0.3; }
 
-  /* Full width card */
   .card-full { margin-bottom: 16px; }
 
-  /* Scrollable */
-  .scrollable { max-height: 350px; overflow-y: auto; padding-right: 4px; }
+  .scrollable { max-height: 400px; overflow-y: auto; padding-right: 4px; }
   .scrollable::-webkit-scrollbar { width: 4px; }
   .scrollable::-webkit-scrollbar-track { background: var(--bg); }
   .scrollable::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  /* Footer */
   footer {
     border-top: 1px solid var(--border);
     padding: 20px 0;
@@ -446,9 +523,13 @@
 
   footer span { color: var(--accent); }
 
-  @media (max-width: 768px) {
-    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 900px) {
+    .stats-row { grid-template-columns: repeat(3, 1fr); }
     .main-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 600px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
   }
 </style>
 </head>
@@ -460,6 +541,7 @@
       <div class="logo">
         AIP-X
         <span class="logo-badge">MVP</span>
+        <span class="logo-version">v0.2.0 — Blockchain</span>
       </div>
       <div class="status-pill">
         <div class="pulse"></div>
@@ -474,7 +556,7 @@
   <!-- API Config -->
   <div class="api-config">
     <label>API URL</label>
-    <input type="text" id="apiUrl" placeholder="https://your-codespace-8000.app.github.dev" />
+    <input type="text" id="apiUrl" placeholder="http://localhost:8000" value="http://localhost:8000" />
     <button class="btn btn-primary" onclick="loadAll()">CONNECT</button>
   </div>
 
@@ -482,119 +564,195 @@
   <div class="stats-row">
     <div class="stat-card green">
       <div class="stat-label">Total Queries</div>
-      <div class="stat-value green" id="statQueries">—</div>
+      <div class="stat-value green" id="statQueries">--</div>
     </div>
     <div class="stat-card blue">
       <div class="stat-label">Ledger Entries</div>
-      <div class="stat-value blue" id="statLedger">—</div>
+      <div class="stat-value blue" id="statLedger">--</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Blocks</div>
+      <div class="stat-value purple" id="statBlocks">--</div>
     </div>
     <div class="stat-card yellow">
       <div class="stat-label">Pending</div>
-      <div class="stat-value yellow" id="statPending">—</div>
+      <div class="stat-value yellow" id="statPending">--</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">BC Transactions</div>
+      <div class="stat-value green" id="statBcTx">--</div>
     </div>
     <div class="stat-card red">
-      <div class="stat-label">Chain Status</div>
-      <div class="stat-value" id="statChain" style="font-size:1rem; padding-top:8px;">—</div>
+      <div class="stat-label">Integrity</div>
+      <div class="stat-value" id="statChain" style="font-size:0.9rem; padding-top:8px;">--</div>
     </div>
   </div>
 
-  <!-- Main grid -->
-  <div class="main-grid">
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('operations')">Operations</button>
+    <button class="tab" onclick="switchTab('ledger')">PG Ledger</button>
+    <button class="tab" onclick="switchTab('blockchain')">Blockchain</button>
+    <button class="tab" onclick="switchTab('queries')">Queries</button>
+  </div>
 
-    <!-- Submit Query -->
-    <div class="card">
+  <!-- Tab: Operations -->
+  <div class="tab-content active" id="tab-operations">
+    <div class="main-grid">
+
+      <!-- Submit Query -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="dot" style="background: var(--accent2)"></div>
+            Submit Query
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Operator Username</label>
+            <input type="text" class="form-input" id="submitOperator" placeholder="alice" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Query</label>
+            <input type="text" class="form-input" id="submitQuery" placeholder="SELECT * FROM persons WHERE..." />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Reason / Justification</label>
+            <input type="text" class="form-input" id="submitReason" placeholder="Counter-terrorism investigation #42" />
+          </div>
+          <button class="btn btn-primary" onclick="submitQuery()" style="width:100%">SUBMIT QUERY</button>
+          <div class="response-box" id="submitResponse"></div>
+        </div>
+      </div>
+
+      <!-- Approve Query -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="dot" style="background: var(--accent)"></div>
+            Approve / Reject
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Query ID</label>
+            <input type="number" class="form-input" id="approveQueryId" placeholder="1" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Approver Username</label>
+            <input type="text" class="form-input" id="approveUsername" placeholder="bob or carol" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Decision</label>
+            <select class="form-select" id="approveDecision">
+              <option value="approved">APPROVED</option>
+              <option value="rejected">REJECTED</option>
+            </select>
+          </div>
+          <button class="btn btn-secondary" onclick="approveQuery()" style="width:100%">SIGN APPROVAL</button>
+          <div class="response-box" id="approveResponse"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Execute -->
+    <div class="card card-full">
       <div class="card-header">
         <div class="card-title">
-          <div class="dot" style="background: var(--accent2)"></div>
-          Submit Query
+          <div class="dot" style="background: var(--warn)"></div>
+          Execute Approved Query
         </div>
       </div>
       <div class="card-body">
-        <div class="form-group">
-          <label class="form-label">Operator Username</label>
-          <input type="text" class="form-input" id="submitOperator" placeholder="alice" />
+        <div class="main-grid" style="margin-bottom:0">
+          <div>
+            <div class="form-group">
+              <label class="form-label">Query ID (must be approved)</label>
+              <input type="number" class="form-input" id="executeQueryId" placeholder="1" />
+            </div>
+          </div>
+          <div>
+            <div class="form-group">
+              <label class="form-label">Executor Username</label>
+              <input type="text" class="form-input" id="executeUsername" placeholder="alice" />
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Query</label>
-          <input type="text" class="form-input" id="submitQuery" placeholder="SELECT * FROM persons WHERE..." />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Reason / Justification</label>
-          <input type="text" class="form-input" id="submitReason" placeholder="Counter-terrorism investigation #42" />
-        </div>
-        <button class="btn btn-primary" onclick="submitQuery()" style="width:100%">SUBMIT QUERY →</button>
-        <div class="response-box" id="submitResponse"></div>
+        <button class="btn btn-warn" onclick="executeQuery()" style="width:100%; margin-top:8px">EXECUTE QUERY</button>
+        <div class="response-box" id="executeResponse"></div>
       </div>
     </div>
+  </div>
 
-    <!-- Approve Query -->
-    <div class="card">
+  <!-- Tab: PG Ledger -->
+  <div class="tab-content" id="tab-ledger">
+    <div class="card card-full">
       <div class="card-header">
         <div class="card-title">
           <div class="dot" style="background: var(--accent)"></div>
-          Approve / Reject
+          PostgreSQL Audit Ledger (hash-chain)
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-secondary" onclick="verifyLedger()">VERIFY PG CHAIN</button>
+          <button class="btn btn-primary" onclick="loadLedger()">REFRESH</button>
         </div>
       </div>
       <div class="card-body">
-        <div class="form-group">
-          <label class="form-label">Query ID</label>
-          <input type="number" class="form-input" id="approveQueryId" placeholder="1" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Approver Username</label>
-          <input type="text" class="form-input" id="approveUsername" placeholder="bob (supervisor) or carol (judge)" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Decision</label>
-          <select class="form-select" id="approveDecision">
-            <option value="approved">✅ Approved</option>
-            <option value="rejected">❌ Rejected</option>
-          </select>
-        </div>
-        <button class="btn btn-secondary" onclick="approveQuery()" style="width:100%">SIGN APPROVAL →</button>
-        <div class="response-box" id="approveResponse"></div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Ledger -->
-  <div class="card card-full">
-    <div class="card-header">
-      <div class="card-title">
-        <div class="dot" style="background: var(--accent)"></div>
-        Immutable Audit Ledger
-      </div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn btn-secondary" onclick="verifyLedger()">VERIFY CHAIN</button>
-        <button class="btn btn-primary" onclick="loadLedger()">REFRESH</button>
-      </div>
-    </div>
-    <div class="card-body">
-      <div id="verifyBanner"></div>
-      <div class="scrollable" id="ledgerEntries">
-        <div class="empty-state">
-          <div class="icon">🔗</div>
-          Connect to API to load ledger
+        <div id="verifyBanner"></div>
+        <div class="scrollable" id="ledgerEntries">
+          <div class="empty-state">
+            <div class="icon">---</div>
+            Connect to API to load ledger
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Queries -->
-  <div class="card card-full">
-    <div class="card-header">
-      <div class="card-title">
-        <div class="dot" style="background: var(--accent2)"></div>
-        Query Registry
+  <!-- Tab: Blockchain -->
+  <div class="tab-content" id="tab-blockchain">
+    <div class="card card-full">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="dot" style="background: var(--purple)"></div>
+          Immutable Blockchain
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-purple" onclick="verifyBlockchain()">VERIFY BLOCKCHAIN</button>
+          <button class="btn btn-warn" onclick="crossVerify()">CROSS-VERIFY</button>
+          <button class="btn btn-primary" onclick="loadBlockchain()">REFRESH</button>
+        </div>
       </div>
-      <button class="btn btn-primary" onclick="loadQueries()">REFRESH</button>
+      <div class="card-body">
+        <div id="bcVerifyBanner"></div>
+        <div class="scrollable" id="blockchainEntries">
+          <div class="empty-state">
+            <div class="icon">---</div>
+            Connect to API to load blockchain
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="card-body">
-      <div class="scrollable" id="queryList">
-        <div class="empty-state">
-          <div class="icon">📋</div>
-          Connect to API to load queries
+  </div>
+
+  <!-- Tab: Queries -->
+  <div class="tab-content" id="tab-queries">
+    <div class="card card-full">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="dot" style="background: var(--accent2)"></div>
+          Query Registry
+        </div>
+        <button class="btn btn-primary" onclick="loadQueries()">REFRESH</button>
+      </div>
+      <div class="card-body">
+        <div class="scrollable" id="queryList">
+          <div class="empty-state">
+            <div class="icon">---</div>
+            Connect to API to load queries
+          </div>
         </div>
       </div>
     </div>
@@ -604,7 +762,7 @@
 
 <footer>
   <div class="container">
-    <span>AIP-X</span> — Accountable Intelligence Platform — Open Source MVP v0.1.0
+    <span>AIP-X</span> — Accountable Intelligence Platform — Open Source MVP v0.2.0 — Blockchain-backed immutable ledger
   </div>
 </footer>
 
@@ -621,14 +779,22 @@
 
   async function apiCall(path, method = 'GET', body = null) {
     const url = getApi() + path;
-    const opts = {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-    };
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
     if (body) opts.body = JSON.stringify(body);
     const res = await fetch(url, opts);
     return res.json();
   }
+
+  // ─── Tab switching ──────────────────────────────────────
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  // ─── Submit ─────────────────────────────────────────────
 
   async function submitQuery() {
     const operator = document.getElementById('submitOperator').value;
@@ -640,9 +806,7 @@
     }
     try {
       const data = await apiCall('/query/submit', 'POST', {
-        operator_username: operator,
-        query_text: query,
-        reason: reason
+        operator_username: operator, query_text: query, reason: reason
       });
       showResponse('submitResponse', data, data.detail);
       loadAll();
@@ -650,6 +814,8 @@
       showResponse('submitResponse', { error: e.message }, true);
     }
   }
+
+  // ─── Approve ────────────────────────────────────────────
 
   async function approveQuery() {
     const queryId = parseInt(document.getElementById('approveQueryId').value);
@@ -661,9 +827,7 @@
     }
     try {
       const data = await apiCall('/query/approve', 'POST', {
-        query_id: queryId,
-        approver_username: approver,
-        decision: decision
+        query_id: queryId, approver_username: approver, decision: decision
       });
       showResponse('approveResponse', data, data.detail);
       loadAll();
@@ -672,6 +836,28 @@
     }
   }
 
+  // ─── Execute ────────────────────────────────────────────
+
+  async function executeQuery() {
+    const queryId = parseInt(document.getElementById('executeQueryId').value);
+    const executor = document.getElementById('executeUsername').value;
+    if (!queryId || !executor) {
+      showResponse('executeResponse', { error: 'Fill all fields' }, true);
+      return;
+    }
+    try {
+      const data = await apiCall('/query/execute', 'POST', {
+        query_id: queryId, executor_username: executor
+      });
+      showResponse('executeResponse', data, data.detail);
+      loadAll();
+    } catch (e) {
+      showResponse('executeResponse', { error: e.message }, true);
+    }
+  }
+
+  // ─── PG Ledger ──────────────────────────────────────────
+
   async function loadLedger() {
     try {
       const data = await apiCall('/ledger');
@@ -679,7 +865,7 @@
       document.getElementById('statLedger').textContent = data.total_entries;
 
       if (!data.ledger || data.ledger.length === 0) {
-        container.innerHTML = '<div class="empty-state"><div class="icon">🔗</div>No entries yet. Submit a query to start.</div>';
+        container.innerHTML = '<div class="empty-state"><div class="icon">---</div>No entries yet.</div>';
         return;
       }
 
@@ -687,9 +873,9 @@
         <div class="ledger-entry">
           <div class="ledger-entry-header">
             <span class="event-badge event-${entry.event_type}">${entry.event_type}</span>
-            <span style="color: var(--text-dim); font-size: 0.65rem;">#${entry.id} · ${new Date(entry.timestamp).toLocaleTimeString()}</span>
+            <span style="color: var(--text-dim); font-size: 0.65rem;">#${entry.id} | ${new Date(entry.timestamp).toLocaleString()}</span>
           </div>
-          <div style="color: var(--text); margin-bottom: 4px;">Actor: <strong style="color:#fff">${entry.actor}</strong> · Query ID: <strong style="color: var(--accent2)">${entry.query_id}</strong></div>
+          <div style="color: var(--text); margin-bottom: 4px;">Actor: <strong style="color:#fff">${entry.actor}</strong> | Query ID: <strong style="color: var(--accent2)">${entry.query_id}</strong></div>
           <div class="hash-display">HASH: <span>${entry.entry_hash}</span></div>
           ${entry.previous_hash ? `<div class="hash-display">PREV: <span style="color: var(--text-dim)">${entry.previous_hash}</span></div>` : ''}
         </div>
@@ -703,22 +889,92 @@
     try {
       const data = await apiCall('/ledger/verify');
       const banner = document.getElementById('verifyBanner');
-      const chainEl = document.getElementById('statChain');
-
       if (data.status === 'VERIFIED') {
-        banner.innerHTML = `<div class="verify-banner verify-ok">✅ CHAIN VERIFIED — ${data.message}</div>`;
-        chainEl.textContent = '✅ OK';
-        chainEl.style.color = 'var(--accent)';
+        banner.innerHTML = `<div class="verify-banner verify-ok">CHAIN VERIFIED -- ${data.message}</div>`;
       } else if (data.status === 'TAMPERED') {
-        banner.innerHTML = `<div class="verify-banner verify-fail">⚠️ CHAIN TAMPERED — ${data.issues.join(', ')}</div>`;
-        chainEl.textContent = '⚠️ ERR';
-        chainEl.style.color = 'var(--danger)';
+        banner.innerHTML = `<div class="verify-banner verify-fail">CHAIN TAMPERED -- ${data.issues.join(', ')}</div>`;
       } else {
-        banner.innerHTML = `<div class="verify-banner verify-empty">— LEDGER EMPTY</div>`;
-        chainEl.textContent = '—';
+        banner.innerHTML = `<div class="verify-banner verify-empty">LEDGER EMPTY</div>`;
       }
     } catch(e) {}
   }
+
+  // ─── Blockchain ─────────────────────────────────────────
+
+  async function loadBlockchain() {
+    try {
+      const data = await apiCall('/blockchain');
+      const container = document.getElementById('blockchainEntries');
+      document.getElementById('statBlocks').textContent = data.total_blocks;
+      document.getElementById('statBcTx').textContent = data.total_transactions;
+
+      if (!data.chain || data.chain.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">---</div>No blocks yet.</div>';
+        return;
+      }
+
+      container.innerHTML = [...data.chain].reverse().map(block => `
+        <div class="block-card">
+          <div class="block-header">
+            <div>
+              <span class="block-index">BLOCK #${block.index}</span>
+              <span class="block-meta" style="margin-left:12px">Nonce: ${block.nonce} | Txs: ${block.transactions.length}</span>
+            </div>
+            <span class="block-meta">${new Date(block.timestamp).toLocaleString()}</span>
+          </div>
+          <div class="hash-display">HASH: <span>${block.hash}</span></div>
+          <div class="hash-display">PREV: <span style="color:var(--text-dim)">${block.previous_hash}</span></div>
+          <div class="hash-display">MERKLE: <span style="color:var(--purple)">${block.merkle_root}</span></div>
+          <div class="block-txs">
+            ${block.transactions.map(tx => `
+              <div class="block-tx">
+                <span class="tx-type">${tx.type || tx.event || 'genesis'}</span>
+                ${tx.query_id ? ` | Query #${tx.query_id}` : ''}
+                ${tx.operator ? ` | Op: ${tx.operator}` : ''}
+                ${tx.approver ? ` | By: ${tx.approver}` : ''}
+                ${tx.executor ? ` | Exec: ${tx.executor}` : ''}
+                ${tx.decision ? ` | ${tx.decision}` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    } catch(e) {
+      document.getElementById('blockchainEntries').innerHTML = `<div class="empty-state" style="color:var(--danger)">Error: ${e.message}</div>`;
+    }
+  }
+
+  async function verifyBlockchain() {
+    try {
+      const data = await apiCall('/blockchain/verify');
+      const banner = document.getElementById('bcVerifyBanner');
+      if (data.status === 'VERIFIED') {
+        banner.innerHTML = `<div class="verify-banner verify-ok">BLOCKCHAIN VERIFIED -- ${data.message}</div>`;
+      } else if (data.status === 'TAMPERED') {
+        banner.innerHTML = `<div class="verify-banner verify-fail">BLOCKCHAIN TAMPERED -- ${data.issues.join(', ')}</div>`;
+      }
+    } catch(e) {}
+  }
+
+  async function crossVerify() {
+    try {
+      const data = await apiCall('/integrity');
+      const banner = document.getElementById('bcVerifyBanner');
+      const chainEl = document.getElementById('statChain');
+
+      if (data.overall_status === 'VERIFIED') {
+        banner.innerHTML = `<div class="verify-banner verify-ok">CROSS-VERIFICATION PASSED -- ${data.message} (PG: ${data.cross_check.pg_entries} entries, BC: ${data.cross_check.blockchain_references} refs)</div>`;
+        chainEl.textContent = 'VERIFIED';
+        chainEl.style.color = 'var(--accent)';
+      } else {
+        banner.innerHTML = `<div class="verify-banner verify-fail">CROSS-VERIFICATION FAILED -- ${data.message} (Missing on BC: ${data.cross_check.missing_on_blockchain})</div>`;
+        chainEl.textContent = 'FAILED';
+        chainEl.style.color = 'var(--danger)';
+      }
+    } catch(e) {}
+  }
+
+  // ─── Queries ────────────────────────────────────────────
 
   async function loadQueries() {
     try {
@@ -730,35 +986,66 @@
       document.getElementById('statPending').textContent = queries.filter(q => q.status === 'pending').length;
 
       if (queries.length === 0) {
-        container.innerHTML = '<div class="empty-state"><div class="icon">📋</div>No queries yet.</div>';
+        container.innerHTML = '<div class="empty-state"><div class="icon">---</div>No queries yet.</div>';
         return;
       }
 
       container.innerHTML = queries.map(q => `
         <div class="query-item">
           <div class="query-header">
-            <span style="color:#fff; font-weight:700">#${q.id} — ${q.operator}</span>
+            <span style="color:#fff; font-weight:700">#${q.id} -- ${q.operator}</span>
             <span class="status-badge status-${q.status}">${q.status}</span>
           </div>
           <div class="query-text">${q.query_text}</div>
-          <div class="query-reason">↳ ${q.reason}</div>
+          <div class="query-reason">Reason: ${q.reason}</div>
+          <div class="query-actions">
+            ${q.status === 'pending' ? `<button class="btn btn-secondary btn-xs" onclick="document.getElementById('approveQueryId').value=${q.id}; switchTabByName('operations');">APPROVE</button>` : ''}
+            ${q.status === 'approved' ? `<button class="btn btn-warn btn-xs" onclick="document.getElementById('executeQueryId').value=${q.id}; switchTabByName('operations');">EXECUTE</button>` : ''}
+            <button class="btn btn-purple btn-xs" onclick="viewQueryTrail(${q.id})">BC TRAIL</button>
+          </div>
         </div>
       `).join('');
     } catch(e) {}
   }
 
-  async function loadAll() {
-    await Promise.all([loadLedger(), loadQueries(), verifyLedger()]);
+  function switchTabByName(name) {
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.remove('active');
+      if (t.textContent.toLowerCase().includes(name)) t.classList.add('active');
+    });
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
   }
 
-  // Auto-detect API URL from current page
+  async function viewQueryTrail(queryId) {
+    switchTabByName('blockchain');
+    try {
+      const data = await apiCall('/blockchain/query/' + queryId);
+      const banner = document.getElementById('bcVerifyBanner');
+      if (data.events.length === 0) {
+        banner.innerHTML = `<div class="verify-banner verify-empty">No blockchain events for Query #${queryId}</div>`;
+      } else {
+        const eventsHtml = data.events.map(e =>
+          `Block #${e.block_index}: ${e.transaction.type} (${e.transaction.tx_timestamp})`
+        ).join('<br>');
+        banner.innerHTML = `<div class="verify-banner verify-ok">BLOCKCHAIN TRAIL FOR QUERY #${queryId} -- ${data.total_events} events<br><div style="font-weight:400;font-size:0.65rem;margin-top:8px;text-align:left">${eventsHtml}</div></div>`;
+      }
+    } catch(e) {}
+  }
+
+  // ─── Load all ───────────────────────────────────────────
+
+  async function loadAll() {
+    await Promise.all([loadLedger(), loadQueries(), loadBlockchain(), crossVerify()]);
+  }
+
   window.addEventListener('load', () => {
     const url = window.location.href;
     if (url.includes('github.dev')) {
       const base = url.replace(/-\d+\.app\.github\.dev.*/, '-8000.app.github.dev');
       document.getElementById('apiUrl').value = base;
-      loadAll();
     }
+    loadAll();
   });
 </script>
 </body>

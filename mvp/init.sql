@@ -36,11 +36,79 @@ CREATE TABLE IF NOT EXISTS approvals (
     query_id INT REFERENCES queries(id),
     approver TEXT NOT NULL,
     decision TEXT NOT NULL, -- approved, rejected
-    timestamp TIMESTAMP DEFAULT NOW()
+    timestamp TIMESTAMP DEFAULT NOW(),
+    -- Prevent duplicate votes
+    UNIQUE(query_id, approver)
 );
 
--- Test data
+-- Query executions (post-approval)
+CREATE TABLE IF NOT EXISTS query_executions (
+    id SERIAL PRIMARY KEY,
+    query_id INT REFERENCES queries(id) UNIQUE,
+    executor TEXT NOT NULL,
+    result_hash TEXT,
+    executed_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ─── Immutability protections ────────────────────────────
+
+-- Prevent UPDATE on audit_ledger
+CREATE OR REPLACE FUNCTION prevent_audit_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    RAISE EXCEPTION 'audit_ledger is immutable: UPDATE operations are forbidden';
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS no_update_audit ON audit_ledger;
+CREATE TRIGGER no_update_audit
+    BEFORE UPDATE ON audit_ledger
+    FOR EACH ROW
+    EXECUTE FUNCTION prevent_audit_update();
+
+-- Prevent DELETE on audit_ledger
+CREATE OR REPLACE FUNCTION prevent_audit_delete()
+RETURNS TRIGGER AS $$
+BEGIN
+    RAISE EXCEPTION 'audit_ledger is immutable: DELETE operations are forbidden';
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS no_delete_audit ON audit_ledger;
+CREATE TRIGGER no_delete_audit
+    BEFORE DELETE ON audit_ledger
+    FOR EACH ROW
+    EXECUTE FUNCTION prevent_audit_delete();
+
+-- Prevent UPDATE on approvals
+CREATE OR REPLACE FUNCTION prevent_approval_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    RAISE EXCEPTION 'approvals table is immutable: UPDATE operations are forbidden';
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS no_update_approvals ON approvals;
+CREATE TRIGGER no_update_approvals
+    BEFORE UPDATE ON approvals
+    FOR EACH ROW
+    EXECUTE FUNCTION prevent_approval_update();
+
+-- Prevent DELETE on approvals
+DROP TRIGGER IF EXISTS no_delete_approvals ON approvals;
+CREATE TRIGGER no_delete_approvals
+    BEFORE DELETE ON approvals
+    FOR EACH ROW
+    EXECUTE FUNCTION prevent_audit_delete();
+
+-- ─── Test data ───────────────────────────────────────────
+
 INSERT INTO operators (username, role) VALUES
     ('alice', 'analyst'),
     ('bob', 'supervisor'),
-    ('carol', 'judge');
+    ('carol', 'judge'),
+    ('dave', 'supervisor'),
+    ('eve', 'analyst');

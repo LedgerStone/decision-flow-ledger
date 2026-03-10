@@ -45,8 +45,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - blockchain_data:/data/blockchain
     restart: unless-stopped
 
 volumes:
   pgdata:
   neo4jdata:
+  blockchain_data:

@@ -6,6 +6,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY main.py .
+COPY blockchain.py .
+
+# Blockchain data directory
+RUN mkdir -p /data/blockchain
 
 EXPOSE 8000
 
