@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: dl_postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: decisionledger
+    ports:
+      - "5433:5432"
+    volumes:
+      - dl_pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d decisionledger"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dl_api
+    ports:
+      - "8001:8000"
+    environment:
+      DATABASE_URL: postgresql://admin:admin123@postgres:5432/decisionledger
+      ADMIN_SECRET: changeme-admin-secret
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - dl_blockchain:/data/blockchain
+    restart: unless-stopped
+
+volumes:
+  dl_pgdata:
+  dl_blockchain:
