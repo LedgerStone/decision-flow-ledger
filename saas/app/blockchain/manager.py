@@ -20,7 +20,7 @@ class TenantBlockchainManager:
         if tenant_id not in self._chains:
             with self._lock:
                 if tenant_id not in self._chains:
-                    chain_file = Path(settings.BLOCKCHAIN_DATA_DIR) / tenant_id / "chain.json"
+                    chain_file = Path(settings.resolved_blockchain_dir) / tenant_id / "chain.json"
                     self._chains[tenant_id] = Blockchain(
                         chain_file=chain_file,
                         difficulty=settings.BLOCKCHAIN_DIFFICULTY,

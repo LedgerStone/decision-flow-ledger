@@ -2,7 +2,12 @@
 DecisionLedger SaaS — Configuration
 """
 
+import logging
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
+
+logger = logging.getLogger("decisionledger.config")
 
 
 class Settings(BaseSettings):
@@ -16,6 +21,30 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+
+    @property
+    def normalized_database_url(self) -> str:
+        """Railway may set DATABASE_URL with postgres:// scheme."""
+        url = self.DATABASE_URL
+        if url.startswith("postgres://") and not url.startswith("postgresql://"):
+            return url.replace("postgres://", "postgresql://", 1)
+        return url
+
+    @property
+    def resolved_blockchain_dir(self) -> str:
+        """Return a writable blockchain directory, falling back to /tmp."""
+        primary = Path(self.BLOCKCHAIN_DATA_DIR)
+        try:
+            primary.mkdir(parents=True, exist_ok=True)
+            test_file = primary / ".write_test"
+            test_file.write_text("ok")
+            test_file.unlink()
+            return str(primary)
+        except OSError:
+            fallback = "/tmp/blockchain"
+            Path(fallback).mkdir(parents=True, exist_ok=True)
+            logger.warning("Primary blockchain dir %s not writable, falling back to %s", primary, fallback)
+            return fallback
 
 
 settings = Settings()

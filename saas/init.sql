@@ -151,19 +151,24 @@ ALTER TABLE audit_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE webhook_endpoints ENABLE ROW LEVEL SECURITY;
 ALTER TABLE webhook_deliveries ENABLE ROW LEVEL SECURITY;
 
--- Policies: restrict rows to current tenant
+-- Policies: restrict rows to current tenant (drop first for idempotency)
+DROP POLICY IF EXISTS tenant_isolation_decisions ON decisions;
 CREATE POLICY tenant_isolation_decisions ON decisions
     USING (tenant_id::text = current_setting('app.current_tenant', true));
 
+DROP POLICY IF EXISTS tenant_isolation_approvals ON approvals;
 CREATE POLICY tenant_isolation_approvals ON approvals
     USING (tenant_id::text = current_setting('app.current_tenant', true));
 
+DROP POLICY IF EXISTS tenant_isolation_audit ON audit_entries;
 CREATE POLICY tenant_isolation_audit ON audit_entries
     USING (tenant_id::text = current_setting('app.current_tenant', true));
 
+DROP POLICY IF EXISTS tenant_isolation_webhooks ON webhook_endpoints;
 CREATE POLICY tenant_isolation_webhooks ON webhook_endpoints
     USING (tenant_id::text = current_setting('app.current_tenant', true));
 
+DROP POLICY IF EXISTS tenant_isolation_deliveries ON webhook_deliveries;
 CREATE POLICY tenant_isolation_deliveries ON webhook_deliveries
     USING (tenant_id::text = current_setting('app.current_tenant', true));
 

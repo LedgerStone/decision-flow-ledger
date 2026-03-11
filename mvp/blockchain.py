@@ -155,10 +155,19 @@ class Blockchain:
         self._persist()
 
     def _persist(self) -> None:
-        self.chain_file.parent.mkdir(parents=True, exist_ok=True)
-        self.chain_file.write_text(
-            json.dumps([b.to_dict() for b in self.chain], indent=2, default=str)
-        )
+        try:
+            self.chain_file.parent.mkdir(parents=True, exist_ok=True)
+            self.chain_file.write_text(
+                json.dumps([b.to_dict() for b in self.chain], indent=2, default=str)
+            )
+        except OSError:
+            # On Railway or read-only filesystems, persist to /tmp fallback
+            fallback = Path("/tmp/blockchain") / self.chain_file.name
+            fallback.parent.mkdir(parents=True, exist_ok=True)
+            fallback.write_text(
+                json.dumps([b.to_dict() for b in self.chain], indent=2, default=str)
+            )
+            self.chain_file = fallback
 
     # ── Core operations ────────────────────────────────────
 

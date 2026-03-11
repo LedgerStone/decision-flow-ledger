@@ -5,7 +5,10 @@ Immutable Ledger API (MVP) with Blockchain Layer
 
 import hashlib
 import json
+import logging
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 import psycopg2
@@ -16,10 +19,72 @@ import os
 
 from blockchain import Blockchain
 
+logger = logging.getLogger("aipx")
+
+
+def _normalize_database_url(url: str) -> str:
+    """Railway may set DATABASE_URL with postgres:// scheme; psycopg2 requires postgresql://."""
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql://", 1)
+    return url
+
+
+DATABASE_URL = _normalize_database_url(
+    os.getenv("DATABASE_URL", "postgresql://admin:admin123@localhost:5432/coredb")
+)
+
+
+def _resolve_blockchain_dir() -> Path:
+    """Return a writable blockchain data directory, falling back to /tmp."""
+    primary = Path(os.getenv("BLOCKCHAIN_DATA_DIR", "/data/blockchain"))
+    try:
+        primary.mkdir(parents=True, exist_ok=True)
+        test_file = primary / ".write_test"
+        test_file.write_text("ok")
+        test_file.unlink()
+        return primary
+    except OSError:
+        fallback = Path("/tmp/blockchain")
+        fallback.mkdir(parents=True, exist_ok=True)
+        logger.warning("Primary blockchain dir %s not writable, falling back to %s", primary, fallback)
+        return fallback
+
+
+def _run_init_sql():
+    """Run init.sql against the database on startup (idempotent)."""
+    init_path = Path(__file__).parent / "init.sql"
+    if not init_path.exists():
+        logger.warning("init.sql not found at %s, skipping schema migration", init_path)
+        return
+    sql = init_path.read_text()
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        conn.autocommit = True
+        cur = conn.cursor()
+        cur.execute(sql)
+        cur.close()
+        conn.close()
+        logger.info("init.sql executed successfully")
+    except Exception as e:
+        logger.error("Failed to run init.sql: %s", e)
+
+
+blockchain_dir = _resolve_blockchain_dir()
+# Initialize blockchain with resolved directory
+blockchain = Blockchain(chain_file=blockchain_dir / "chain.json")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    _run_init_sql()
+    yield
+
+
 app = FastAPI(
     title="AIP-X Ledger API",
     description="Open-source accountable intelligence platform — immutable audit ledger backed by blockchain",
     version="0.2.0",
+    lifespan=lifespan,
 )
 
 # CORS for dashboard
@@ -29,11 +94,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:admin123@localhost:5432/coredb")
-
-# Initialize blockchain
-blockchain = Blockchain()
 
 
 def get_db():
@@ -76,6 +136,25 @@ class ExecuteRequest(BaseModel):
 
 
 # ─── Routes ───────────────────────────────────────────────
+
+@app.get("/health")
+def health():
+    """Health check endpoint for Railway."""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT 1")
+        cur.close()
+        conn.close()
+        db_ok = True
+    except Exception:
+        db_ok = False
+
+    return {
+        "status": "healthy" if db_ok else "degraded",
+        "database": "connected" if db_ok else "disconnected",
+    }
+
 
 @app.get("/")
 def root():
