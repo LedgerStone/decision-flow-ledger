@@ -2,18 +2,24 @@
 DecisionLedger SaaS — API key authentication
 Keys are formatted as dl_live_<prefix>_<secret>
 The prefix (first 8 hex chars) is stored in plaintext for fast lookup.
-The full key is bcrypt-hashed at rest.
+The full key is SHA-256 hashed at rest.
 """
 
+import hashlib
+import hmac
 import secrets
 
 from fastapi import HTTPException, Security
 from fastapi.security import APIKeyHeader
-from passlib.hash import bcrypt
 
 from app.database import admin_connection
 
 api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
+
+
+def _hash_key(raw_key: str) -> str:
+    """SHA-256 hash of the API key."""
+    return hashlib.sha256(raw_key.encode()).hexdigest()
 
 
 def generate_api_key() -> tuple[str, str, str]:
@@ -21,7 +27,7 @@ def generate_api_key() -> tuple[str, str, str]:
     prefix = secrets.token_hex(4)  # 8 hex chars
     secret = secrets.token_hex(24)  # 48 hex chars
     raw_key = f"dl_live_{prefix}_{secret}"
-    key_hash = bcrypt.hash(raw_key)
+    key_hash = _hash_key(raw_key)
     return raw_key, prefix, key_hash
 
 
@@ -60,7 +66,7 @@ async def verify_api_key(authorization: str = Security(api_key_header)) -> dict:
     if not row["is_active"]:
         raise HTTPException(status_code=403, detail="Tenant is inactive")
 
-    if not bcrypt.verify(key, row["key_hash"]):
+    if not hmac.compare_digest(_hash_key(key), row["key_hash"]):
         raise HTTPException(status_code=401, detail="Invalid API key")
 
     return {

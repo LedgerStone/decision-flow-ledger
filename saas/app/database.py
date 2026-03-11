@@ -2,6 +2,7 @@
 DecisionLedger SaaS — Async database layer with tenant isolation (RLS)
 """
 
+import re
 import asyncpg
 from contextlib import asynccontextmanager
 
@@ -33,7 +34,10 @@ async def tenant_connection(tenant_id: str):
     """Acquire a connection with RLS tenant context set."""
     pool = get_pool()
     async with pool.acquire() as conn:
-        await conn.execute("SET app.current_tenant = $1", tenant_id)
+        # Validate UUID format to prevent injection in SET command
+        if not re.match(r'^[0-9a-f\-]{36}$', tenant_id):
+            raise ValueError("Invalid tenant_id format")
+        await conn.execute(f"SET app.current_tenant = '{tenant_id}'")
         yield conn
 
 
