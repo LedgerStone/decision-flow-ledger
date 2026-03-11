@@ -1,80 +1,149 @@
-# Accountable Intelligence Platform (AIP-X)
+# Decision Flow Ledger
 
-*Open-source data intelligence inspired by Palantir — with accountability built in.*  
-AIP-X is a modular platform where every query, analysis, and AI-assisted decision can produce an *immutable, cryptographically verifiable audit trail* (without publishing sensitive data).
+*Open-source data intelligence with accountability built in.*
 
-> Not “data on-chain”.  
-> *Accountability on-chain (or append-only ledger), data kept inside a secure perimeter.*
+Every query, analysis, and AI-assisted decision produces an **immutable, cryptographically verifiable audit trail** — without publishing sensitive data.
 
----
-
-## Why this exists
-
-Modern intelligence / investigation / high-stakes analytics platforms are powerful, but often operate like black boxes:
-- Queries can be executed with limited oversight.
-- Audit logs can be incomplete, hard to verify, or altered after the fact.
-- AI recommendations can be hard to explain and hard to contest.
-
-AIP-X aims to enable Palantir-level workflows while structurally reducing abuse by design:
-- Immutable logging (append-only, tamper-evident).
-- Policy-gated queries (RBAC + justification).
-- Multi-approval workflows for sensitive actions.
-- Optional cryptographic proofs (ZK) for “this was authorized” without revealing sensitive details.
+> Not "data on-chain".
+> *Accountability on-chain, data kept inside a secure perimeter.*
 
 ---
 
-## Core features (MVP-focused)
+## Repository structure
 
-- *Controlled queries*: requests validated by policy before execution (role, purpose, scope).
-- *Immutable query ledger*: hash + timestamp + actor + reason + decision (approved/denied), append-only.
-- *Multi-signature governance (optional)*: sensitive queries require N-of-M approvals.
-- *Graph investigations (Gotham-like)*: entity relationships, link analysis, fraud/network patterns.
-- *AI assistant (AIP-like, optional)*: RAG over approved data + citations to sources + traceable actions.
+```
+decision-flow-ledger/
+├── mvp/        AIP-X — internal intelligence platform
+├── saas/       DecisionLedger — external SaaS for clients
+└── docs/       Shared documentation and architecture
+```
 
----
-
-## Tech stack (intended)
-
-### Data integration / processing (Foundry-like)
-- Apache NiFi (data flows, ingestion)
-- Airbyte (connectors/ELT)
-- dbt (transformations)
-- Apache Spark (scale processing)
-- Trino/Presto (federated SQL)
-
-### Graph analytics (Gotham-like)
-- Neo4j Community OR Apache AGE (PostgreSQL graph extension)
-- NetworkX (algorithms), optional Gephi/Cytoscape (visual exploration)
-
-### Audit ledger (accountability layer)
-- PostgreSQL (audit schema, hashing, retention)
-- Optional permissioned ledger: Hyperledger Fabric (or similar)
-- Optional evidence store: S3-compatible / MinIO / IPFS (only for non-sensitive artifacts)
-
-### AI layer (AIP-like)
-- LangChain (or equivalent orchestration)
-- Qdrant / Weaviate (vector store)
-- Ollama (local LLMs) + optional OpenAI/others (configurable)
-- SHAP/LIME (explainability where applicable)
-
-### Security / governance
-- Keycloak (IAM, OIDC)
-- HashiCorp Vault (secrets)
-- Optional ZK tooling: snarkjs (proofs for authorization claims)
+This repo contains **two distinct products** built on the same core principle: every decision must be traceable, auditable, and tamper-proof.
 
 ---
 
-## Getting started (placeholder)
+## mvp/ — AIP-X (Internal Platform)
 
-> This repo is in early development. The goal is a one-command local demo.
+**What it is:** A Palantir-inspired intelligence platform for organizations that handle sensitive data — law enforcement, counter-terrorism, healthcare, corporate investigations.
+
+**Who it's for:** Internal deployment within a single organization. The platform runs inside the organization's secure perimeter.
+
+**Key characteristics:**
+- Self-hosted, air-gap compatible
+- Blockchain-backed immutable audit ledger (local PoW chain + PostgreSQL)
+- Multi-signature approval workflows (2-of-N) for query execution
+- Cross-verification between PostgreSQL and blockchain
+- Graph analytics (Neo4j) for relationship mapping
+- Role-based access: analyst, supervisor, judge
+
+**How to run:**
+```bash
+cd mvp
+docker compose up --build -d
+# API: http://localhost:8000
+# Dashboard: open mvp/dashboard.html
+```
+
+**Current status:** MVP functional — blockchain layer, query lifecycle (submit > approve > execute), immutability triggers on DB, dashboard with blockchain explorer.
+
+[More details](mvp/README.md)
+
+---
+
+## saas/ — DecisionLedger (External SaaS)
+
+**What it is:** A multi-tenant SaaS platform that provides auditable decision workflows as a service. Companies integrate it into their existing systems to get compliance-ready audit trails.
+
+**Who it's for:** External clients — enterprises, fintechs, healthcare providers, legal firms — anyone who needs to prove that decisions were made correctly and cannot be altered after the fact.
+
+**Key characteristics:**
+- Multi-tenant architecture with tenant isolation
+- REST API and SDK for integration into existing workflows
+- Managed blockchain — clients don't need to run infrastructure
+- Compliance dashboards (GDPR, SOX, HIPAA audit readiness)
+- Webhook notifications for approval workflows
+- Usage-based billing
+
+**Use cases:**
+- **Fintech:** Prove loan approval decisions were policy-compliant
+- **Healthcare:** Verify data access was authorized and GDPR-compliant
+- **Legal:** Immutable chain of custody for digital evidence
+- **HR:** Auditable hiring/termination decision trails
+- **Regulated industries:** Any process where "who approved what, when, and why" matters
+
+**Current status:** In development.
+
+---
+
+## How mvp and saas relate
+
+| | **mvp/ (AIP-X)** | **saas/ (DecisionLedger)** |
+|---|---|---|
+| **Deployment** | Self-hosted, on-premise | Cloud-hosted, managed |
+| **Users** | Internal teams within one org | Multiple external client orgs |
+| **Tenancy** | Single-tenant | Multi-tenant |
+| **Data model** | Full intelligence platform (queries, graph, AI) | Decision audit trails as a service |
+| **Blockchain** | Local chain, full control | Managed chain, per-tenant isolation |
+| **Integration** | Standalone platform with dashboard | API/SDK to plug into existing systems |
+| **Scope** | Deep analytics + accountability | Accountability layer only |
+| **License** | Open source | Open core (community + enterprise tiers) |
+
+The **mvp** is the full intelligence platform — it's what you deploy when you *are* the organization doing investigations and analytics.
+
+The **saas** extracts the accountability layer and offers it to *other* organizations as a service — they keep their existing tools and plug DecisionLedger in for the audit trail.
+
+They share the same core blockchain and audit primitives, but serve fundamentally different purposes.
+
+---
+
+## Tech stack
+
+### Core (shared)
+- Python 3.11+, FastAPI
+- PostgreSQL 15 (with immutability triggers)
+- Custom blockchain (SHA-256, PoW, Merkle trees)
+- Docker / Docker Compose
+
+### mvp-specific
+- Neo4j (graph analytics)
+- Single-file dashboard (HTML/JS)
+
+### saas-specific (planned)
+- Multi-tenant PostgreSQL (schema-per-tenant or RLS)
+- Redis (caching, rate limiting)
+- Stripe (billing)
+- OAuth2 / API keys for client auth
+
+### Future (both)
+- LangChain + Ollama (AI layer)
+- Keycloak (IAM)
+- Zero-knowledge proofs (snarkjs)
+- IPFS (evidence storage)
+
+---
+
+## Getting started
 
 ### Prerequisites
 - Docker + Docker Compose
 - Python 3.11+
-- Node.js 18+ (if you enable ZK tooling)
 
-### Run (planned)
+### Quick start (mvp)
 ```bash
-git clone https://github.com/<org>/<repo>.git
-cd <repo>
-docker compose up -d
+git clone https://github.com/LedgerStone/decision-flow-ledger.git
+cd decision-flow-ledger/mvp
+docker compose up --build -d
+```
+
+---
+
+## License
+
+Apache 2.0
+
+---
+
+## Contact
+
+- Email: decision.acc@gmail.com
+- Twitter: @ELCOM439088
