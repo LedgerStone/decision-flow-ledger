@@ -618,10 +618,9 @@ def repair_blockchain(_auth: bool = Depends(verify_api_key)):
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
-        SELECT al.id, al.query_id, al.event_type, o.username, al.entry_hash, al.timestamp
-        FROM audit_ledger al
-        JOIN operators o ON al.actor_id = o.id
-        ORDER BY al.id ASC
+        SELECT id, query_id, event_type, actor, entry_hash, timestamp
+        FROM audit_ledger
+        ORDER BY id ASC
     """)
     rows = cur.fetchall()
     cur.close()
