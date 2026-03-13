@@ -612,6 +612,50 @@ def get_blockchain_query_trail(query_id: int, _auth: bool = Depends(verify_api_k
     }
 
 
+@app.post("/blockchain/repair")
+def repair_blockchain(_auth: bool = Depends(verify_api_key)):
+    """Replay missing PostgreSQL ledger entries onto the blockchain."""
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT al.id, al.query_id, al.event_type, o.username, al.entry_hash, al.timestamp
+        FROM audit_ledger al
+        JOIN operators o ON al.actor_id = o.id
+        ORDER BY al.id ASC
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    # Collect hashes already on blockchain
+    bc_hashes = set()
+    for block in blockchain.chain:
+        for tx in block.transactions:
+            if "pg_entry_hash" in tx:
+                bc_hashes.add(tx["pg_entry_hash"])
+
+    repaired = 0
+    for row in rows:
+        entry_hash = row[4]
+        if entry_hash in bc_hashes:
+            continue
+        blockchain.force_mine_single({
+            "type": row[2],
+            "query_id": row[1],
+            "actor": row[3],
+            "pg_entry_hash": entry_hash,
+            "repaired": True,
+        })
+        repaired += 1
+
+    return {
+        "repaired": repaired,
+        "total_pg_entries": len(rows),
+        "already_on_chain": len(bc_hashes),
+        "message": f"Repaired {repaired} missing entries on blockchain.",
+    }
+
+
 @app.get("/integrity")
 def cross_verify(_auth: bool = Depends(verify_api_key)):
     """Cross-verify PostgreSQL ledger against blockchain for consistency."""
