@@ -11,8 +11,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+import hmac
+
 import psycopg2
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
@@ -32,6 +34,17 @@ def _normalize_database_url(url: str) -> str:
 DATABASE_URL = _normalize_database_url(
     os.getenv("DATABASE_URL", "postgresql://admin:admin123@localhost:5432/coredb")
 )
+
+API_KEY = os.getenv("API_KEY", "")
+
+
+def verify_api_key(x_api_key: str = Header()):
+    """Validate the API key sent via X-Api-Key header."""
+    if not API_KEY:
+        raise HTTPException(status_code=500, detail="API_KEY not configured on server")
+    if not hmac.compare_digest(x_api_key, API_KEY):
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    return True
 
 
 def _resolve_blockchain_dir() -> Path:
@@ -173,7 +186,7 @@ def root():
 
 
 @app.post("/query/submit")
-def submit_query(req: QueryRequest):
+def submit_query(req: QueryRequest, _auth: bool = Depends(verify_api_key)):
     """Submit a new query. Goes into 'pending' state, requires approval.
     The submission is recorded both in PostgreSQL and on the blockchain."""
     conn = get_db()
@@ -253,7 +266,7 @@ def submit_query(req: QueryRequest):
 
 
 @app.post("/query/approve")
-def approve_query(req: ApprovalRequest):
+def approve_query(req: ApprovalRequest, _auth: bool = Depends(verify_api_key)):
     """Approve or reject a query. Requires supervisor or judge role.
     Decision is recorded on the blockchain."""
     conn = get_db()
@@ -387,7 +400,7 @@ def approve_query(req: ApprovalRequest):
 
 
 @app.post("/query/execute")
-def execute_query(req: ExecuteRequest):
+def execute_query(req: ExecuteRequest, _auth: bool = Depends(verify_api_key)):
     """Execute an approved query. Only approved queries can be executed.
     Execution event is recorded on the blockchain."""
     conn = get_db()
@@ -483,7 +496,7 @@ def execute_query(req: ExecuteRequest):
 # ─── Ledger Routes (PostgreSQL) ──────────────────────────
 
 @app.get("/ledger")
-def get_ledger():
+def get_ledger(_auth: bool = Depends(verify_api_key)):
     """View the full PostgreSQL audit ledger (for oversight bodies)."""
     conn = get_db()
     cur = conn.cursor()
@@ -511,9 +524,8 @@ def get_ledger():
     return {"ledger": ledger, "total_entries": len(ledger)}
 
 
-@app.get("/ledger/verify")
-def verify_ledger():
-    """Verify the integrity of the PostgreSQL ledger chain."""
+def _verify_ledger_internal():
+    """Internal ledger verification logic (no auth, reusable)."""
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT id, entry_hash, previous_hash FROM audit_ledger ORDER BY id ASC")
@@ -536,10 +548,16 @@ def verify_ledger():
     return {"status": "VERIFIED", "message": f"PostgreSQL ledger chain intact — {len(rows)} entries verified."}
 
 
+@app.get("/ledger/verify")
+def verify_ledger(_auth: bool = Depends(verify_api_key)):
+    """Verify the integrity of the PostgreSQL ledger chain."""
+    return _verify_ledger_internal()
+
+
 # ─── Blockchain Routes ───────────────────────────────────
 
 @app.get("/blockchain")
-def get_blockchain():
+def get_blockchain(_auth: bool = Depends(verify_api_key)):
     """View the full blockchain (immutable, independent from PostgreSQL)."""
     chain = blockchain.get_full_chain()
     return {
@@ -550,19 +568,19 @@ def get_blockchain():
 
 
 @app.get("/blockchain/stats")
-def blockchain_stats():
+def blockchain_stats(_auth: bool = Depends(verify_api_key)):
     """Get blockchain statistics."""
     return blockchain.stats()
 
 
 @app.get("/blockchain/verify")
-def verify_blockchain():
+def verify_blockchain(_auth: bool = Depends(verify_api_key)):
     """Full blockchain integrity verification: hash chain, proof-of-work, merkle roots."""
     return blockchain.verify_chain()
 
 
 @app.get("/blockchain/block/{index}")
-def get_block(index: int):
+def get_block(index: int, _auth: bool = Depends(verify_api_key)):
     """Get a specific block by index."""
     block = blockchain.get_block(index)
     if block is None:
@@ -571,7 +589,7 @@ def get_block(index: int):
 
 
 @app.get("/blockchain/tx/{tx_hash}")
-def get_transaction(tx_hash: str):
+def get_transaction(tx_hash: str, _auth: bool = Depends(verify_api_key)):
     """Look up a transaction by its hash."""
     result = blockchain.get_transaction_by_hash(tx_hash)
     if result is None:
@@ -580,7 +598,7 @@ def get_transaction(tx_hash: str):
 
 
 @app.get("/blockchain/query/{query_id}")
-def get_blockchain_query_trail(query_id: int):
+def get_blockchain_query_trail(query_id: int, _auth: bool = Depends(verify_api_key)):
     """Get the full blockchain trail for a specific query (all events)."""
     results = blockchain.get_transactions_for_query(query_id)
     return {
@@ -591,9 +609,9 @@ def get_blockchain_query_trail(query_id: int):
 
 
 @app.get("/integrity")
-def cross_verify():
+def cross_verify(_auth: bool = Depends(verify_api_key)):
     """Cross-verify PostgreSQL ledger against blockchain for consistency."""
-    pg_result = verify_ledger()
+    pg_result = _verify_ledger_internal()
     bc_result = blockchain.verify_chain()
 
     pg_ok = pg_result.get("status") in ("VERIFIED", "empty")
@@ -640,7 +658,7 @@ def cross_verify():
 # ─── Queries ─────────────────────────────────────────────
 
 @app.get("/queries")
-def get_queries():
+def get_queries(_auth: bool = Depends(verify_api_key)):
     """List all queries with their current status."""
     conn = get_db()
     cur = conn.cursor()
@@ -671,7 +689,7 @@ def get_queries():
 
 
 @app.get("/queries/{query_id}")
-def get_query_detail(query_id: int):
+def get_query_detail(query_id: int, _auth: bool = Depends(verify_api_key)):
     """Get full details for a query, including approvals and blockchain trail."""
     conn = get_db()
     cur = conn.cursor()
@@ -736,7 +754,7 @@ def get_query_detail(query_id: int):
 
 
 @app.get("/operators")
-def get_operators():
+def get_operators(_auth: bool = Depends(verify_api_key)):
     """List all operators."""
     conn = get_db()
     cur = conn.cursor()
