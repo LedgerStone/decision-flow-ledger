@@ -12,7 +12,7 @@ export default function Ledger({ api }) {
     setLoading(true)
     try {
       const data = await api.call('/ledger')
-      setEntries(data.entries || [])
+      setEntries(data.ledger || [])
     } catch (e) {
       console.error(e)
     }
@@ -47,10 +47,10 @@ export default function Ledger({ api }) {
 
       {verification && (
         <div style={{ padding: '16px 20px 0' }}>
-          <div className={`verify-banner ${verification.valid ? 'verify-ok' : 'verify-fail'}`}>
-            {verification.valid
-              ? `Ledger Verified — ${verification.total_entries} entries, chain intact`
-              : `Verification Failed — ${verification.error || 'chain broken'}`}
+          <div className={`verify-banner ${verification.status === 'VERIFIED' ? 'verify-ok' : 'verify-fail'}`}>
+            {verification.status === 'VERIFIED'
+              ? `Ledger Verified — ${verification.message}`
+              : `Verification Failed — ${verification.error || verification.message || 'chain broken'}`}
           </div>
         </div>
       )}
@@ -65,13 +65,13 @@ export default function Ledger({ api }) {
             <div className="ledger-entry" key={i}>
               <div className="ledger-row">
                 <span className="query-id">Entry #{e.id}</span>
-                <span className="ledger-meta">{e.action} — {e.actor}</span>
+                <span className="ledger-meta">{e.event_type} — {e.actor}</span>
               </div>
               <div className="ledger-meta">Query #{e.query_id} | {e.timestamp}</div>
               <div className="hash-box">
                 <span className="hl">hash: </span>{e.entry_hash?.slice(0, 32)}...
                 <br />
-                <span className="hl-purple">prev: </span>{e.prev_hash?.slice(0, 32) || 'genesis'}...
+                <span className="hl-purple">prev: </span>{e.previous_hash?.slice(0, 32) || 'genesis'}...
               </div>
             </div>
           ))}
