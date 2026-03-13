@@ -35,14 +35,14 @@ export default function App() {
         api.call('/ledger'),
         api.call('/blockchain'),
         api.call('/blockchain/stats'),
-        api.call('/cross-verify'),
+        api.call('/integrity'),
       ])
       setQueries(q.queries || [])
       setStatsData({
         queries: q.queries || [],
         ledgerCount: l.entries?.length || 0,
         bcStats: bcs,
-        integrity: integrity.cross_verified ? 'VERIFIED' : 'FAILED',
+        integrity: integrity.overall_status || 'UNKNOWN',
       })
       setOnline(true)
     } catch (e) {

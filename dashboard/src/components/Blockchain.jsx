@@ -39,10 +39,10 @@ export default function Blockchain({ api }) {
   const crossVerifyFn = async () => {
     setVerifying(true)
     try {
-      const r = await api.call('/cross-verify')
+      const r = await api.call('/integrity')
       setCrossVerify(r)
     } catch (e) {
-      setCrossVerify({ cross_verified: false, error: e.message })
+      setCrossVerify({ overall_status: 'FAILED', error: e.message })
     }
     setVerifying(false)
   }
@@ -80,10 +80,10 @@ export default function Blockchain({ api }) {
         </div>
       )}
       {crossVerify && (
-        <div className={`verify-banner ${crossVerify.cross_verified ? 'verify-ok' : 'verify-fail'}`}>
-          {crossVerify.cross_verified
+        <div className={`verify-banner ${crossVerify.overall_status === 'VERIFIED' ? 'verify-ok' : 'verify-fail'}`}>
+          {crossVerify.overall_status === 'VERIFIED'
             ? `Cross-Verification Passed — ledger & blockchain match`
-            : `Cross-Verification Failed — ${crossVerify.error || 'mismatch'}`}
+            : `Integrity: ${crossVerify.overall_status} — ${crossVerify.message || crossVerify.error || ''}`}
         </div>
       )}
 
