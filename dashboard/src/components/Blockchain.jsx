@@ -17,7 +17,7 @@ export default function Blockchain({ api }) {
         api.call('/blockchain'),
         api.call('/blockchain/stats')
       ])
-      setBlocks(b.blocks || [])
+      setBlocks(b.chain || [])
       setStats(s)
     } catch (e) {
       console.error(e)
@@ -31,7 +31,7 @@ export default function Blockchain({ api }) {
       const r = await api.call('/blockchain/verify')
       setBcVerify(r)
     } catch (e) {
-      setBcVerify({ valid: false, error: e.message })
+      setBcVerify({ status: 'FAILED', error: e.message })
     }
     setVerifying(false)
   }
@@ -65,18 +65,18 @@ export default function Blockchain({ api }) {
         </div>
         <div className="stat-card green">
           <div className="stat-label">Chain Valid</div>
-          <div className={`stat-value ${stats.is_valid ? 'green' : 'red'}`} style={{ fontSize: '0.9rem', paddingTop: 6 }}>
-            {stats.is_valid === undefined ? '--' : stats.is_valid ? 'YES' : 'NO'}
+          <div className={`stat-value ${bcVerify?.status === 'VERIFIED' ? 'green' : bcVerify ? 'red' : ''}`} style={{ fontSize: '0.9rem', paddingTop: 6 }}>
+            {!bcVerify ? '--' : bcVerify.status === 'VERIFIED' ? 'YES' : 'NO'}
           </div>
         </div>
       </div>
 
       {/* Verification Banners */}
       {bcVerify && (
-        <div className={`verify-banner ${bcVerify.valid ? 'verify-ok' : 'verify-fail'}`}>
-          {bcVerify.valid
-            ? `Blockchain Verified — ${bcVerify.total_blocks} blocks, all hashes valid`
-            : `Blockchain Verification Failed — ${bcVerify.error || 'invalid'}`}
+        <div className={`verify-banner ${bcVerify.status === 'VERIFIED' ? 'verify-ok' : 'verify-fail'}`}>
+          {bcVerify.status === 'VERIFIED'
+            ? `Blockchain Verified — ${bcVerify.message}`
+            : `Blockchain Verification Failed — ${bcVerify.error || bcVerify.message || 'invalid'}`}
         </div>
       )}
       {crossVerify && (
