@@ -7,10 +7,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY mvp/main.py .
 COPY mvp/blockchain.py .
+COPY mvp/notifications.py .
 COPY mvp/init.sql .
 COPY mvp/dashboard.html .
-
-RUN mkdir -p /data/blockchain
 
 ENV PORT=8000
 
