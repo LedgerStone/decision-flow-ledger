@@ -9,20 +9,19 @@ Each block contains:
 - Nonce (proof-of-work)
 - Block hash
 
-The chain is persisted to disk (JSON) as a secondary
-immutable store independent from PostgreSQL.
+The chain is persisted to PostgreSQL (blockchain_blocks table)
+so it survives container redeploys.
 """
 
 import hashlib
 import json
-import time
 import threading
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Optional
 
+import psycopg2
 
-CHAIN_FILE = Path("/data/blockchain/chain.json")
+
 DIFFICULTY = 4  # number of leading zeros required in block hash
 
 
@@ -120,28 +119,69 @@ class Block:
 
 class Blockchain:
     """
-    Thread-safe, append-only blockchain with disk persistence.
+    Thread-safe, append-only blockchain with PostgreSQL persistence.
     """
 
-    def __init__(self, chain_file: Path = CHAIN_FILE, difficulty: int = DIFFICULTY):
-        self.chain_file = chain_file
+    def __init__(self, database_url: str = "", difficulty: int = DIFFICULTY, **kwargs):
+        self.database_url = database_url
         self.difficulty = difficulty
         self.chain: list[Block] = []
         self.pending_transactions: list[dict] = []
         self._lock = threading.Lock()
         self._load_or_init()
 
+    # ── Database helpers ──────────────────────────────────
+
+    def _get_db(self):
+        return psycopg2.connect(self.database_url)
+
+    def _ensure_table(self) -> None:
+        """Create blockchain_blocks table if it doesn't exist."""
+        try:
+            conn = self._get_db()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS blockchain_blocks (
+                    id SERIAL PRIMARY KEY,
+                    block_index INT UNIQUE NOT NULL,
+                    block_data JSONB NOT NULL,
+                    block_hash TEXT NOT NULL,
+                    previous_hash TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT NOW()
+                )
+            """)
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception:
+            pass
+
     # ── Persistence ────────────────────────────────────────
 
     def _load_or_init(self) -> None:
-        if self.chain_file.exists():
-            try:
-                data = json.loads(self.chain_file.read_text())
-                self.chain = [Block.from_dict(b) for b in data]
-                if self.chain:
-                    return
-            except (json.JSONDecodeError, KeyError):
-                pass
+        """Load chain from PostgreSQL, or create genesis block."""
+        if not self.database_url:
+            self._create_genesis()
+            return
+
+        self._ensure_table()
+
+        try:
+            conn = self._get_db()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT block_data FROM blockchain_blocks ORDER BY block_index ASC"
+            )
+            rows = cur.fetchall()
+            cur.close()
+            conn.close()
+
+            if rows:
+                self.chain = [Block.from_dict(row[0]) for row in rows]
+                return
+        except Exception:
+            pass
+
         self._create_genesis()
 
     def _create_genesis(self) -> None:
@@ -152,22 +192,28 @@ class Blockchain:
         )
         genesis.mine(self.difficulty)
         self.chain = [genesis]
-        self._persist()
+        self._persist_block(genesis)
 
-    def _persist(self) -> None:
+    def _persist_block(self, block: Block) -> None:
+        """Save a single block to PostgreSQL."""
+        if not self.database_url:
+            return
         try:
-            self.chain_file.parent.mkdir(parents=True, exist_ok=True)
-            self.chain_file.write_text(
-                json.dumps([b.to_dict() for b in self.chain], indent=2, default=str)
+            conn = self._get_db()
+            cur = conn.cursor()
+            cur.execute(
+                """INSERT INTO blockchain_blocks (block_index, block_data, block_hash, previous_hash)
+                   VALUES (%s, %s, %s, %s)
+                   ON CONFLICT (block_index) DO NOTHING""",
+                (block.index, json.dumps(block.to_dict(), default=str), block.hash, block.previous_hash),
             )
-        except OSError:
-            # On Railway or read-only filesystems, persist to /tmp fallback
-            fallback = Path("/tmp/blockchain") / self.chain_file.name
-            fallback.parent.mkdir(parents=True, exist_ok=True)
-            fallback.write_text(
-                json.dumps([b.to_dict() for b in self.chain], indent=2, default=str)
-            )
-            self.chain_file = fallback
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception as e:
+            # Log but don't crash — chain is still in memory
+            import logging
+            logging.getLogger("aipx").warning(f"Failed to persist block {block.index}: {e}")
 
     # ── Core operations ────────────────────────────────────
 
@@ -200,7 +246,7 @@ class Blockchain:
             new_block.mine(self.difficulty)
             self.chain.append(new_block)
             self.pending_transactions.clear()
-            self._persist()
+            self._persist_block(new_block)
             return new_block
 
     def force_mine_single(self, transaction: dict) -> Block:
@@ -218,7 +264,7 @@ class Blockchain:
             )
             new_block.mine(self.difficulty)
             self.chain.append(new_block)
-            self._persist()
+            self._persist_block(new_block)
             return new_block
 
     # ── Verification ───────────────────────────────────────
@@ -228,12 +274,6 @@ class Blockchain:
         issues = []
 
         for i, block in enumerate(self.chain):
-            # Verify hash is correct
-            recomputed = block.compute_hash()
-            if block.hash != recomputed and i > 0:
-                # For mined blocks, nonce should make hash valid
-                pass
-
             # Verify proof-of-work
             if not block.hash.startswith("0" * self.difficulty):
                 issues.append(
@@ -305,5 +345,4 @@ class Blockchain:
             "last_block_hash": self.last_block.hash,
             "last_block_index": self.last_block.index,
             "difficulty": self.difficulty,
-            "chain_file": str(self.chain_file),
         }

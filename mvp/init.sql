@@ -104,6 +104,38 @@ CREATE TRIGGER no_delete_approvals
     FOR EACH ROW
     EXECUTE FUNCTION prevent_audit_delete();
 
+-- Blockchain blocks (persisted to survive redeploys)
+CREATE TABLE IF NOT EXISTS blockchain_blocks (
+    id SERIAL PRIMARY KEY,
+    block_index INT UNIQUE NOT NULL,
+    block_data JSONB NOT NULL,
+    block_hash TEXT NOT NULL,
+    previous_hash TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Prevent UPDATE on blockchain_blocks
+CREATE OR REPLACE FUNCTION prevent_blockchain_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    RAISE EXCEPTION 'blockchain_blocks is immutable: UPDATE operations are forbidden';
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS no_update_blockchain ON blockchain_blocks;
+CREATE TRIGGER no_update_blockchain
+    BEFORE UPDATE ON blockchain_blocks
+    FOR EACH ROW
+    EXECUTE FUNCTION prevent_blockchain_update();
+
+-- Prevent DELETE on blockchain_blocks
+DROP TRIGGER IF EXISTS no_delete_blockchain ON blockchain_blocks;
+CREATE TRIGGER no_delete_blockchain
+    BEFORE DELETE ON blockchain_blocks
+    FOR EACH ROW
+    EXECUTE FUNCTION prevent_audit_delete();
+
 -- ─── Test data ───────────────────────────────────────────
 
 INSERT INTO operators (username, role) VALUES

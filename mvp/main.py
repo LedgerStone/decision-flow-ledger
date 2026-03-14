@@ -51,22 +51,6 @@ def verify_api_key(x_api_key: str = Header()):
     return True
 
 
-def _resolve_blockchain_dir() -> Path:
-    """Return a writable blockchain data directory, falling back to /tmp."""
-    primary = Path(os.getenv("BLOCKCHAIN_DATA_DIR", "/data/blockchain"))
-    try:
-        primary.mkdir(parents=True, exist_ok=True)
-        test_file = primary / ".write_test"
-        test_file.write_text("ok")
-        test_file.unlink()
-        return primary
-    except OSError:
-        fallback = Path("/tmp/blockchain")
-        fallback.mkdir(parents=True, exist_ok=True)
-        logger.warning("Primary blockchain dir %s not writable, falling back to %s", primary, fallback)
-        return fallback
-
-
 def _run_init_sql():
     """Run init.sql against the database on startup (idempotent)."""
     init_path = Path(__file__).parent / "init.sql"
@@ -86,9 +70,8 @@ def _run_init_sql():
         logger.error("Failed to run init.sql: %s", e)
 
 
-blockchain_dir = _resolve_blockchain_dir()
-# Initialize blockchain with resolved directory
-blockchain = Blockchain(chain_file=blockchain_dir / "chain.json")
+# Initialize blockchain with PostgreSQL persistence
+blockchain = Blockchain(database_url=DATABASE_URL)
 
 
 @asynccontextmanager
