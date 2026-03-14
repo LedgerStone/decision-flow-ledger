@@ -40,7 +40,7 @@ export default function App() {
       setQueries(q.queries || [])
       setStatsData({
         queries: q.queries || [],
-        ledgerCount: l.entries?.length || 0,
+        ledgerCount: l.ledger?.length || 0,
         bcStats: bcs,
         integrity: integrity.overall_status || 'UNKNOWN',
       })
