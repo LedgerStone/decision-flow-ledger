@@ -24,6 +24,7 @@ from slowapi.errors import RateLimitExceeded
 import os
 
 from blockchain import Blockchain
+from notifications import notify_query_submitted
 
 logger = logging.getLogger("aipx")
 
@@ -272,6 +273,15 @@ def submit_query(req: QueryRequest, _auth: bool = Depends(verify_api_key)):
         "reason": req.reason,
         "pg_entry_hash": entry_hash,
     })
+
+    # Send email notification (async, non-blocking)
+    notify_query_submitted(
+        query_id=query_id,
+        operator=req.operator_username,
+        query_text=req.query_text,
+        reason=req.reason,
+        query_hash=query_hash,
+    )
 
     return {
         "query_id": query_id,
