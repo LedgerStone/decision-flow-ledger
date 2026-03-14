@@ -15,7 +15,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 API_BASE = "http://localhost:8000"
-API_KEY = os.getenv("API_KEY", "changeme-mvp-api-key")
+API_KEY = os.getenv("API_KEY", "")
 AUTH_HEADER = {"X-Api-Key": API_KEY}
 
 
