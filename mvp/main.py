@@ -14,9 +14,13 @@ from typing import Optional
 import hmac
 
 import psycopg2
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import os
 
 from blockchain import Blockchain
@@ -93,12 +97,25 @@ async def lifespan(app: FastAPI):
     yield
 
 
+# Rate limiter — 100 requests/minute per IP
+limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+
 app = FastAPI(
     title="AIP-X Ledger API",
     description="Open-source accountable intelligence platform — immutable audit ledger backed by blockchain",
     version="0.2.0",
     lifespan=lifespan,
 )
+app.state.limiter = limiter
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Rate limit exceeded. Max 100 requests per minute."},
+    )
+
 
 # CORS for dashboard
 app.add_middleware(
@@ -155,21 +172,40 @@ class ExecuteRequest(BaseModel):
 # ─── Routes ───────────────────────────────────────────────
 
 @app.get("/health")
+@limiter.exempt
 def health():
-    """Health check endpoint for Railway."""
+    """Health check endpoint for monitoring. Exempt from rate limiting."""
     try:
         conn = get_db()
         cur = conn.cursor()
         cur.execute("SELECT 1")
+        cur.execute("SELECT COUNT(*) FROM audit_ledger")
+        ledger_count = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM queries")
+        query_count = cur.fetchone()[0]
         cur.close()
         conn.close()
         db_ok = True
     except Exception:
         db_ok = False
+        ledger_count = 0
+        query_count = 0
+
+    bc_stats = blockchain.stats()
+    bc_valid = blockchain.verify_chain().get("status") == "VERIFIED"
+
+    status = "healthy" if (db_ok and bc_valid) else "degraded"
 
     return {
-        "status": "healthy" if db_ok else "degraded",
+        "status": status,
         "database": "connected" if db_ok else "disconnected",
+        "blockchain": "valid" if bc_valid else "invalid",
+        "counts": {
+            "queries": query_count,
+            "ledger_entries": ledger_count,
+            "blocks": bc_stats.get("total_blocks", 0),
+        },
+        "version": "0.3.0",
     }
 
 
@@ -179,7 +215,7 @@ def root():
     return {
         "project": "AIP-X — Accountable Intelligence Platform",
         "status": "MVP running",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "blockchain": {
             "total_blocks": stats["total_blocks"],
             "total_transactions": stats["total_transactions"],
